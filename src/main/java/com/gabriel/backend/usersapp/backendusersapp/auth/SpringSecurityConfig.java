@@ -36,14 +36,14 @@ public class SpringSecurityConfig {
     }
 
     @Bean
-    AuthenticationManager authenticationManager() throws Exception{
+    AuthenticationManager authenticationManager() throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
     // creacion de metodo que devuelve una cadena de filtro.
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http.authorizeHttpRequests().requestMatchers(HttpMethod.GET, "/users").permitAll()
+        return http.authorizeHttpRequests().requestMatchers(HttpMethod.GET, "/users", "/users/page/{page}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/{id}").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/users").hasRole("ADMIN")
                 .requestMatchers("/users/**").hasRole("ADMIN")
@@ -77,7 +77,7 @@ public class SpringSecurityConfig {
     @Bean
     FilterRegistrationBean<CorsFilter> corsFilter() {
         FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<>(
-            new CorsFilter(corsConfigurationSource()));
+                new CorsFilter(corsConfigurationSource()));
         bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
 
         return bean;

@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +22,7 @@ import com.gabriel.backend.usersapp.backendusersapp.repositories.RoleRepository;
 import com.gabriel.backend.usersapp.backendusersapp.repositories.UserRepository;
 
 @Service
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService {
 
     // ctrl + . sobre el error y agregar los metodos no implementados
     @Autowired
@@ -36,22 +38,22 @@ public class UserServiceImpl implements UserService{
     @Transactional(readOnly = true)
     public List<UserDto> findAll() {
 
-        List<User> user =  (List<User>) repository.findAll();
+        List<User> user = (List<User>) repository.findAll();
 
         return user
-        .stream()
-        .map(u -> DtoMapperUser.builder().setUser(u).build())
-        .collect(Collectors.toList());
+                .stream()
+                .map(u -> DtoMapperUser.builder().setUser(u).build())
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
 
     public Optional<UserDto> findById(Long id) {
-       return  repository.findById(id).map(u -> DtoMapperUser
-       .builder()
-       .setUser(u)
-       .build());
+        return repository.findById(id).map(u -> DtoMapperUser
+                .builder()
+                .setUser(u)
+                .build());
     }
 
     @Override
@@ -61,19 +63,17 @@ public class UserServiceImpl implements UserService{
 
         user.setRoles(getRoles(user));
 
-       return DtoMapperUser.builder().setUser(repository.save(user)).build();
+        return DtoMapperUser.builder().setUser(repository.save(user)).build();
     }
-
-    
 
     @Override
     @Transactional
     public Optional<UserDto> update(UserRequest user, Long id) {
-        
+
         Optional<User> o = repository.findById(id);
         User userOptional = null;
         // validar
-        if(o.isPresent()) {
+        if (o.isPresent()) {
             User userDb = o.orElseThrow();
 
             userDb.setRoles(getRoles(user));
@@ -82,7 +82,7 @@ public class UserServiceImpl implements UserService{
             // guardar el objeto actualizado.
             // pasando el userDb porque es el usuario almacenado en la base de datos.
             userOptional = repository.save(userDb);
-            
+
         }
         return Optional.ofNullable(DtoMapperUser.builder().setUser(userOptional).build());
     }
@@ -96,17 +96,16 @@ public class UserServiceImpl implements UserService{
     private List<Role> getRoles(IUser user) {
         Optional<Role> ou = roleRepository.findByName("ROLE_USER");
 
-
         List<Role> roles = new ArrayList<>();
 
-        if(ou.isPresent()) {
+        if (ou.isPresent()) {
             roles.add(ou.orElseThrow());
-        } 
+        }
 
-        if(user.isAdmin()) {
+        if (user.isAdmin()) {
             // si es administrador, busca el rol en la base de datos
             Optional<Role> oa = roleRepository.findByName("ROLE_ADMIN");
-            if(oa.isPresent()) {
+            if (oa.isPresent()) {
                 roles.add(oa.orElseThrow());
             }
         }
@@ -114,6 +113,17 @@ public class UserServiceImpl implements UserService{
         return roles;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserDto> findAll(Pageable pageable) {
+        // otra forma de hacerlo en una sola linea es la siguiente
+        // return repository.findAll(pageable).map(u ->
+        // DtoMapperUser.builder().setUser(u).build());
+        Page<User> userPage = repository.findAll(pageable);
 
+        // convertir a un page de UserDTO
+        // convierte el entity a un UserDTO
+        return userPage.map(u -> DtoMapperUser.builder().setUser(u).build());
+    }
 
 }
